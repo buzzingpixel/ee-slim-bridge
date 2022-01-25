@@ -1,0 +1,21 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PhpCSValidationInspection" enabled="true" level="WEAK WARNING" enabled_by_default="false">
+      <scope name="Project PHP Files" level="WEAK WARNING" enabled="true">
+        <option name="CODING_STANDARD" value="Custom" />
+        <option name="CUSTOM_RULESET_PATH" value="$PROJECT_DIR$/phpcs.xml" />
+        <option name="SHOW_SNIFF_NAMES" value="true" />
+        <option name="EXTENSIONS" value="php" />
+      </scope>
+      <option name="EXTENSIONS" value="php" />
+    </inspection_tool>
+    <inspection_tool class="PhpStanGlobal" enabled="true" level="WEAK WARNING" enabled_by_default="false">
+      <scope name="Project PHP Files" level="WEAK WARNING" enabled="true">
+        <option name="memoryLimit" value="4G" />
+        <option name="config" value="$PROJECT_DIR$/phpstan.neon" />
+      </scope>
+      <option name="memoryLimit" value="4G" />
+    </inspection_tool>
+  </profile>
+</component>
