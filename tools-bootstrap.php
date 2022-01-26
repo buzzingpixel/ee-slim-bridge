@@ -67,3 +67,4 @@ require_once __DIR__ . '/vendor/expressionengine/expressionengine/system/ee/lega
 require_once __DIR__ . '/vendor/expressionengine/expressionengine/system/ee/ExpressionEngine/Service/View/View.php';
 require_once __DIR__ . '/vendor/expressionengine/expressionengine/system/ee/ExpressionEngine/Service/Alert/AlertCollection.php';
 require_once __DIR__ . '/vendor/expressionengine/expressionengine/system/ee/ExpressionEngine/Service/Alert/Alert.php';
+require_once __DIR__ . '/vendor/expressionengine/expressionengine/system/ee/legacy/core/Config.php';

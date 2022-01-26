@@ -8,26 +8,81 @@ declare(strict_types=1);
 // phpcs:disable Squiz.Classes.ClassFileName.NoMatch
 // phpcs:disable Squiz.Classes.ValidClassName.NotCamelCaps
 // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+use BuzzingPixel\SlimBridge\Config\Config;
+use BuzzingPixel\SlimBridge\Container\RetrieveInternalContainer;
+use BuzzingPixel\SlimBridge\PhpFunctions;
+use BuzzingPixel\SlimBridge\Slim\ServerRequestFactory;
+use BuzzingPixel\SlimBridge\Slim\SlimAppFactory;
 use ExpressionEngine\Model\Addon\Extension;
 use ExpressionEngine\Service\Model\Facade as RecordService;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use Slim\ResponseEmitter;
 
 class Slim_bridge_ext
 {
     public string $version = SLIM_BRIDGE_VERSION;
 
+    private Config $config;
+
+    private SlimAppFactory $slimAppFactory;
+
+    private ServerRequestFactory $serverRequestFactory;
+
+    private ResponseEmitter $responseEmitter;
+
+    private PhpFunctions $phpFunctions;
+
     private RecordService $recordService;
 
     /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     *
      * @codeCoverageIgnore
      */
     public function __construct()
     {
+        $container = (new RetrieveInternalContainer())->retrieve();
+
+        /** @phpstan-ignore-next-line */
+        $this->config = $container->get(Config::class);
+
+        /** @phpstan-ignore-next-line */
+        $this->slimAppFactory = $container->get(SlimAppFactory::class);
+
+        /** @phpstan-ignore-next-line */
+        $this->serverRequestFactory = $container->get(
+            ServerRequestFactory::class,
+        );
+
+        /** @phpstan-ignore-next-line */
+        $this->responseEmitter = $container->get(ResponseEmitter::class);
+
+        /** @phpstan-ignore-next-line */
+        $this->phpFunctions = $container->get(PhpFunctions::class);
+
         $this->recordService = ee('Model');
     }
 
     public function core_boot(): void
     {
-        // TODO: Implement core boot
+        $isEnabled = $this->config->getBoolean(
+            item: 'enabled',
+            index: 'slimBridge'
+        );
+
+        if (! $isEnabled) {
+            return;
+        }
+
+        $response = $this->slimAppFactory->make()->handle(
+            $this->serverRequestFactory->make(),
+        );
+
+        $this->responseEmitter->emit($response);
+
+        $this->phpFunctions->stopExecution();
     }
 
     public function activate_extension(): bool

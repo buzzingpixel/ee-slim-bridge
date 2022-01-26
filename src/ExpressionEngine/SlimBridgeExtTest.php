@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace BuzzingPixel\SlimBridge\ExpressionEngine;
 
+use BuzzingPixel\SlimBridge\Config\Config;
+use BuzzingPixel\SlimBridge\PhpFunctions;
+use BuzzingPixel\SlimBridge\Slim\ServerRequestFactory;
+use BuzzingPixel\SlimBridge\Slim\SlimAppFactory;
 use ExpressionEngine\Model\Addon\Extension;
 use ExpressionEngine\Service\Model\Facade as RecordService;
 use ExpressionEngine\Service\Model\Query\Builder;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use ReflectionClass;
+use ReflectionException;
+use Slim\App;
+use Slim\ResponseEmitter;
 use Slim_bridge_ext;
 
 use function assert;
@@ -18,15 +27,34 @@ class SlimBridgeExtTest extends TestCase
     /** @var mixed[] */
     private array $calls = [];
 
+    private bool $configBooleanReturn = false;
+
+    private ServerRequestInterface $request;
+
+    private ResponseInterface $response;
+
     private ?Extension $extension = null;
 
     private Slim_bridge_ext $slimBridgeExt;
 
+    /**
+     * @throws ReflectionException
+     */
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->calls = [];
+
+        $this->configBooleanReturn = false;
+
+        $this->request = $this->createMock(
+            ServerRequestInterface::class,
+        );
+
+        $this->response = $this->createMock(
+            ResponseInterface::class,
+        );
 
         $this->extension = null;
 
@@ -36,18 +64,86 @@ class SlimBridgeExtTest extends TestCase
 
         $slimBridgeExt = $slimBridgeExtRef->newInstanceWithoutConstructor();
 
+        /** @phpstan-ignore-next-line */
         assert($slimBridgeExt instanceof Slim_bridge_ext);
 
         $slimBridgeExtObjectRef = new ReflectionClass(
             $slimBridgeExt,
         );
 
+        /**
+         * Config
+         */
+        $configProperty = $slimBridgeExtObjectRef->getProperty(
+            'config',
+        );
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $configProperty->setAccessible(true);
+        $configProperty->setValue(
+            $slimBridgeExt,
+            $this->mockConfig(),
+        );
+
+        /**
+         * SlimAppFactory
+         */
+        $slimAppFactoryProperty = $slimBridgeExtObjectRef->getProperty(
+            'slimAppFactory',
+        );
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $slimAppFactoryProperty->setAccessible(true);
+        $slimAppFactoryProperty->setValue(
+            $slimBridgeExt,
+            $this->mockSlimAppFactory(),
+        );
+
+        /**
+         * ServerRequestFactory
+         */
+        $serverRequestFactoryProperty = $slimBridgeExtObjectRef->getProperty(
+            'serverRequestFactory',
+        );
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $serverRequestFactoryProperty->setAccessible(true);
+        $serverRequestFactoryProperty->setValue(
+            $slimBridgeExt,
+            $this->mockServerRequestFactory(),
+        );
+
+        /**
+         * ResponseEmitter
+         */
+        $responseEmitterProperty = $slimBridgeExtObjectRef->getProperty(
+            'responseEmitter',
+        );
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $responseEmitterProperty->setAccessible(true);
+        $responseEmitterProperty->setValue(
+            $slimBridgeExt,
+            $this->mockResponseEmitter(),
+        );
+
+        /**
+         * PhpFunctions
+         */
+        $phpFunctionsProperty = $slimBridgeExtObjectRef->getProperty(
+            'phpFunctions',
+        );
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $phpFunctionsProperty->setAccessible(true);
+        $phpFunctionsProperty->setValue(
+            $slimBridgeExt,
+            $this->mockPhpFunctions(),
+        );
+
+        /**
+         * RecordService
+         */
         $recordServiceProperty = $slimBridgeExtObjectRef->getProperty(
             'recordService',
         );
         /** @noinspection PhpExpressionResultUnusedInspection */
         $recordServiceProperty->setAccessible(true);
-
         $recordServiceProperty->setValue(
             $slimBridgeExt,
             $this->mockRecordService(),
@@ -56,11 +152,110 @@ class SlimBridgeExtTest extends TestCase
         $this->slimBridgeExt = $slimBridgeExt;
     }
 
+    private function mockConfig(): Config
+    {
+        $mock = $this->createMock(Config::class);
+
+        $mock->method('getBoolean')->willReturnCallback(
+            function (string $item, string $index): bool {
+                $this->calls[] = [
+                    'object' => 'Config',
+                    'method' => 'getBoolean',
+                    'item' => $item,
+                    'index' => $index,
+                ];
+
+                return $this->configBooleanReturn;
+            }
+        );
+
+        return $mock;
+    }
+
+    private function mockSlimAppFactory(): SlimAppFactory
+    {
+        $mock = $this->createMock(SlimAppFactory::class);
+
+        $mock->method('make')->willReturn(
+            $this->mockSlimApp(),
+        );
+
+        return $mock;
+    }
+
+    private function mockSlimApp(): App
+    {
+        $mock = $this->createMock(App::class);
+
+        $mock->method('handle')->willReturnCallback(
+            function (
+                ServerRequestInterface $request,
+            ): ResponseInterface {
+                $this->calls[] = [
+                    'object' => 'App',
+                    'method' => 'handle',
+                    'request' => $request,
+                ];
+
+                return $this->response;
+            }
+        );
+
+        return $mock;
+    }
+
+    private function mockServerRequestFactory(): ServerRequestFactory
+    {
+        $mock = $this->createMock(
+            ServerRequestFactory::class,
+        );
+
+        $mock->method('make')->willReturnCallback(
+            function (): ServerRequestInterface {
+                return $this->request;
+            }
+        );
+
+        return $mock;
+    }
+
+    private function mockResponseEmitter(): ResponseEmitter
+    {
+        $mock = $this->createMock(ResponseEmitter::class);
+
+        $mock->method('emit')->willReturnCallback(
+            function (ResponseInterface $response): void {
+                $this->calls[] = [
+                    'object' => 'ResponseEmitter',
+                    'method' => 'emit',
+                    'response' => $response,
+                ];
+            }
+        );
+
+        return $mock;
+    }
+
+    private function mockPhpFunctions(): PhpFunctions
+    {
+        $mock = $this->createMock(PhpFunctions::class);
+
+        $mock->method('stopExecution')->willReturnCallback(
+            function (): void {
+                $this->calls[] = [
+                    'object' => 'PhpFunctions',
+                    'method' => 'stopExecution',
+                ];
+            }
+        );
+
+        return $mock;
+    }
+
     private function mockRecordService(): RecordService
     {
         $mock = $this->createMock(RecordService::class);
 
-        // TODO
         $mock->method('get')->willReturnCallback(
             function (string $name): Builder {
                 $this->calls[] = [
@@ -166,11 +361,54 @@ class SlimBridgeExtTest extends TestCase
         return $mock;
     }
 
-    public function testCoreBoot(): void
+    public function testCoreBootWhenNotEnabled(): void
     {
         $this->slimBridgeExt->core_boot();
 
-        self::assertTrue(true);
+        self::assertSame(
+            [
+                [
+                    'object' => 'Config',
+                    'method' => 'getBoolean',
+                    'item' => 'enabled',
+                    'index' => 'slimBridge',
+                ],
+            ],
+            $this->calls,
+        );
+    }
+
+    public function testCoreBootWhenEnabled(): void
+    {
+        $this->configBooleanReturn = true;
+
+        $this->slimBridgeExt->core_boot();
+
+        self::assertSame(
+            [
+                [
+                    'object' => 'Config',
+                    'method' => 'getBoolean',
+                    'item' => 'enabled',
+                    'index' => 'slimBridge',
+                ],
+                [
+                    'object' => 'App',
+                    'method' => 'handle',
+                    'request' => $this->request,
+                ],
+                [
+                    'object' => 'ResponseEmitter',
+                    'method' => 'emit',
+                    'response' => $this->response,
+                ],
+                [
+                    'object' => 'PhpFunctions',
+                    'method' => 'stopExecution',
+                ],
+            ],
+            $this->calls,
+        );
     }
 
     public function testActivateExtensionWhenRecordIsNotNull(): void
