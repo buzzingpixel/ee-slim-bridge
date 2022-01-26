@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- PrettyResultPrinter is currentl incompatible with PHP 8.1 -->
+<!-- printerClass="Codedungeon\PHPUnitPrettyResultPrinter\Printer" -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
-         bootstrap="testBootstrap.php"
+         bootstrap="tools-bootstrap.php"
          cacheResultFile=".phpunit.cache/test-results"
          executionOrder="depends,defects"
          beStrictAboutOutputDuringTests="true"
@@ -11,7 +13,6 @@
          failOnWarning="true"
          verbose="true"
          colors="true"
-         printerClass="Codedungeon\PHPUnitPrettyResultPrinter\Printer"
 >
     <testsuites>
         <testsuite name="default">
