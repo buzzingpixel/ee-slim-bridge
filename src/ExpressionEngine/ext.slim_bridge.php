@@ -23,6 +23,8 @@ class Slim_bridge_ext
 {
     public string $version = SLIM_BRIDGE_VERSION;
 
+    private string $req = '';
+
     private Config $config;
 
     private SlimAppFactory $slimAppFactory;
@@ -43,6 +45,8 @@ class Slim_bridge_ext
      */
     public function __construct()
     {
+        $this->req = defined('REQ') ? REQ : '';
+
         $container = (new RetrieveInternalContainer())->retrieve();
 
         /** @phpstan-ignore-next-line */
@@ -67,6 +71,10 @@ class Slim_bridge_ext
 
     public function core_boot(): void
     {
+        if ($this->req !== 'PAGE') {
+            return;
+        }
+
         $isEnabled = $this->config->getBoolean(
             item: 'enabled',
             index: 'slimBridge'

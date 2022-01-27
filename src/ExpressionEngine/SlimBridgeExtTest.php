@@ -361,8 +361,40 @@ class SlimBridgeExtTest extends TestCase
         return $mock;
     }
 
+    private function setReq(string $req): void
+    {
+        $slimBridgeExtObjectRef = new ReflectionClass(
+            $this->slimBridgeExt,
+        );
+
+        /**
+         * Config
+         */
+        $configProperty = $slimBridgeExtObjectRef->getProperty(
+            'req',
+        );
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $configProperty->setAccessible(true);
+        $configProperty->setValue(
+            $this->slimBridgeExt,
+            $req,
+        );
+    }
+
+    public function testCoreBootWhenReqIsNotPage(): void
+    {
+        $this->slimBridgeExt->core_boot();
+
+        self::assertSame(
+            [],
+            $this->calls,
+        );
+    }
+
     public function testCoreBootWhenNotEnabled(): void
     {
+        $this->setReq('PAGE');
+
         $this->slimBridgeExt->core_boot();
 
         self::assertSame(
@@ -380,6 +412,8 @@ class SlimBridgeExtTest extends TestCase
 
     public function testCoreBootWhenEnabled(): void
     {
+        $this->setReq('PAGE');
+
         $this->configBooleanReturn = true;
 
         $this->slimBridgeExt->core_boot();
@@ -413,6 +447,8 @@ class SlimBridgeExtTest extends TestCase
 
     public function testActivateExtensionWhenRecordIsNotNull(): void
     {
+        $this->setReq('PAGE');
+
         $this->extension = $this->createMock(
             Extension::class,
         );
@@ -451,6 +487,8 @@ class SlimBridgeExtTest extends TestCase
 
     public function testActivateExtensionWhenRecordNull(): void
     {
+        $this->setReq('PAGE');
+
         self::assertTrue($this->slimBridgeExt->activate_extension());
 
         self::assertSame(
@@ -536,6 +574,8 @@ class SlimBridgeExtTest extends TestCase
 
     public function testUpdateExtensionWhenRecordNull(): void
     {
+        $this->setReq('PAGE');
+
         self::assertFalse($this->slimBridgeExt->update_extension());
 
         self::assertSame(
@@ -570,6 +610,8 @@ class SlimBridgeExtTest extends TestCase
 
     public function testUpdateExtensionWhenRecordIsNotNull(): void
     {
+        $this->setReq('PAGE');
+
         $this->extension = $this->mockMadeExtension();
 
         self::assertTrue($this->slimBridgeExt->update_extension());
@@ -616,6 +658,8 @@ class SlimBridgeExtTest extends TestCase
 
     public function testDisableExtensionWhenRecordNull(): void
     {
+        $this->setReq('PAGE');
+
         self::assertTrue($this->slimBridgeExt->disable_extension());
 
         self::assertSame(
@@ -638,6 +682,8 @@ class SlimBridgeExtTest extends TestCase
 
     public function testDisableExtensionWhenRecordIsNotNull(): void
     {
+        $this->setReq('PAGE');
+
         $this->extension = $this->mockMadeExtension();
 
         self::assertTrue($this->slimBridgeExt->disable_extension());
